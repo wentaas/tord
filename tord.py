@@ -3,7 +3,7 @@ from asyncio import TimeoutError
 import discord
 
 bot = discord.Client()
-token = "NzA4Nzc3OTUyOTc1OTEzMDEz.XriRIg.64OjdKhn5ULEz7dW7V_zzg2VVu8"
+token = "not set"
 games = {}
 
 with open('truth_questions.txt', 'r', encoding='utf-8') as f:
