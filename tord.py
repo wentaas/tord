@@ -6,6 +6,7 @@ from discord.ext import commands
 bot = commands.Bot(command_prefix='tord ')
 token = ""
 games = {}
+no_game = "you don't have a game, type ``tord play [mention players]`` to start one"
 
 with open('truth_questions.txt', 'r', encoding='utf-8') as f:
     truth_questions = f.read().splitlines()
@@ -13,103 +14,112 @@ with open('dare_questions.txt', 'r', encoding='utf-8') as f:
     dare_questions = f.read().splitlines()
 
 
-async def roll(c, a):
-    if a.id in games:
-        choices = sample(games[a.id], len(games[a.id]))
-        await c.send(f"{choices[0]} asks {choices[1]}")
-
-
-# async def game(c, a, players=[], rem=False):
-#     try:
-#         msg = await bot.wait_for('message', timeout=120)
-#         if msg.author == a:
-#             print(a)
-#             if len(msg.mentions) > 0:
-#                 mentions = msg.mentions
-#                 print(mentions)
-#                 if rem:
-#                     added = []
-#                     not_added = []
-#                     for name in mentions:
-#                         if name.mention in players:
-#                             added.append(name.mention)
-#                             players.pop(name.mention)
-#                         else:
-#                             not_added.append(name.mention)
-#                     await c.send(f"{' '.join(added)} removed from the game, see you again!!")
-#                     if not_added:
-#                         if len(not_added) > 1:
-#                             await c.send(f"{' '.join(not_added)} weren't in the game anyway")
-#                         else:
-#                             await c.send(f"{' '.join(not_added)} wasn't in the game anyway")
-#                 else:
-#                     if not players:
-#                         await c.send("type ``roll`` after answering and ``tord stop`` to end the game\n``tord add`` or ``tord remove`` to add/remove players"
-#                                      "\n``tord truth`` or ``tord dare`` for a question recommendation\nok enough talking LET'S GOOO!")
-#                         players.append(a.mention)
-#                     for name in mentions:
-#                         if name.mention not in players:
-#                             players.append(name.mention)
-#                     await c.send(f"{' '.join(players)} in the game!")
-#                 games[a.id] = players
-#                 await roll(c, a)
-#             else:
-#                 await c.send(f"but you didn't mention anyone, are you confused? you just mention them\nuse the command again please", delete_after=10)
-#     except TimeoutError:
-#         await c.send("you didn't tag anyone, don't you wanna play :(", delete_after=10)
-#
-#
-# @bot.event
-# async def on_message(m):
-#     t = m.content.lower()
-#     a = m.author
-#     c = m.channel
-#     if t.startswith(('tord play', 'tord start', 'tord create', 'tord begin', 'tord make')):
-#         if a.id not in games:
-#             await c.send("YAY!! mention everyone you wanna play with")
-#             await game(c, a)
-#         else:
-#             await c.send(f"you already have a game, type ``tord stop`` to end it", delete_after=10)
-#     if t.startswith(('tord stop', 'tord quit', 'tord end', 'tord add', 'tord join', 'tord remove', 'tord kick')):
-#         if a.id in games:
-#             if t.startswith(('tord stop', 'tord quit', 'tord end')):
-#                 games.pop(a.id)
-#                 await c.send("i hope it was a good game, bye for now!!")
-#             elif t.startswith(('tord add', 'tord join', 'tord remove')):
-#                 await c.send("ooo!! mention everyone you wanna add")
-#                 await game(c, a, games[a.id])
-#             elif t.startswith(('tord remove', 'tord kick')):
-#                 await c.send("aww ok, mention everyone you wanna remove")
-#                 await game(c, a, games[a.id], True)
-#     elif t.startswith('tord truth'):
-#         await c.send(choice(truth_questions))
-#     elif t.startswith('tord dare'):
-#         await c.send(choice(dare_questions))
-#     elif t == 'roll':
-#         await roll(c, a)
-
-
-@bot.command(aliases=('start', 'create', 'begin', 'make'), description='starts the game, example: tord play @wentaas @lexxx')
+@bot.command(aliases=('start', 'create', 'begin', 'make'), description='starts the game, example tord play @wentaas @lexxx')
 async def play(ctx, *players: discord.Member):
+    a = ctx.author
     if players:
-        a = ctx.author
         if a.id not in games:
             mentions = [a.mention]
             for player in players:
                 if player.mention not in mentions:
                     mentions.append(player.mention)
             games[a.id] = mentions
-            await ctx.send("type ``roll`` after answering and ``tord stop`` to end the game\n``tord add`` or ``tord remove`` to add/remove players"
-                           "\n``tord truth`` or ``tord dare`` for a question recommendation\nok enough talking LET'S GOOO!")
-            await roll(ctx.channel, a)
+            await ctx.send(f"{' '.join(mentions)} quick tutorial for yall:\njust type ``tord roll`` after answering and ``tord stop`` to end the game\n``tord add`` or ``tord remove`` to add/remove players\n"
+                           "and if you want a question recommendation ``tord truth`` or ``tord dare``\nok enough talking **LET'S GOOO!**")
+            await roll(ctx)
         else:
             await ctx.send("you already have a game, type ``tord stop`` to end it", delete_after=10)
     else:
-        await ctx.send("so you use it like ``tord play @wentaas @alyyy``", delete_after=30)
+        await ctx.send("so you use it like this ``tord play @wentaas @lexxx``", delete_after=30)
 
 
-@bot.command(aliases=('stop', 'quit', 'end', 'add', 'join', 'remove', 'kick'), description='stops the game, example: tord stop')
-async
+@bot.command(aliases=('quit', 'end', 'finish'), description='stops the game, usage: tord stop')
+async def stop(ctx):
+    a = ctx.author
+    if a.id in games:
+        games.pop(a.id)
+        await ctx.send("i hope it was a good game, bye for now!!")
+    else:
+        await ctx.send(no_game, delete_after=10)
+
+
+@bot.event
+async def on_command_error(ctx, error):
+    if isinstance(error, commands.errors.BadArgument):
+        await ctx.send("couldn't find that member, try mentioning them")
+
+
+@bot.command(description='adds players to the game, example: tord add @wentaas @lexxx')
+async def add(ctx, *players: discord.Member):
+    a = ctx.author
+    if players:
+        if a.id in games:
+            mentions = games[a.id]
+            added = []
+            for player in players:
+                if player.mention not in mentions:
+                    mentions.append(player.mention)
+                    added.append(player.mention)
+            games[a.id] = mentions
+            if added:
+                await ctx.send(f"welcome {' '.join(added)} to the game!!")
+            else:
+                await ctx.send("i couldn't find anyone to add, are they already in the game?")
+            await roll(ctx)
+        else:
+            await ctx.send(no_game, delete_after=10)
+    else:
+        await ctx.send("ok so you use it like this ``tord add @wentaas @lexxx``")
+
+
+@bot.command(aliases=('kick', 'delete'), description='removes players from the game, example: tord remove @wentaas @lexxx')
+async def remove(ctx, *players: discord.Member):
+    a = ctx.author
+    if players:
+        if a.id in games:
+            mentions = games[a.id]
+            removed = []
+            for player in players:
+                if player != a:
+                    if player.mention in mentions:
+                        mentions.remove(player.mention)
+                        removed.append(player.mention)
+                else:
+                    await ctx.send("you can't remove yourself from your own game, type ``tord stop`` for that")
+                    break
+            games[a.id] = mentions
+            if removed:
+                await ctx.send(f"bye {' '.join(removed)}, hope you had fun!!")
+            else:
+                await ctx.send("i couldn't find anyone to remove, are they not in the game anyway?")
+            await roll(ctx)
+        else:
+            await ctx.send(no_game, delete_after=10)
+    else:
+        await ctx.send("ok so you use it like this ``tord remove @wentaas @lexxx``")
+
+
+@bot.command(aliases=('again', 'new', 'continue'), description='picks who askes who again, usage: tord roll')
+async def roll(ctx):
+    a = ctx.author
+    if a.id in games:
+        try:
+            choices = sample(games[a.id], 2)
+            await ctx.send(f"{choices[0]} asks {choices[1]}")
+        except ValueError:
+            await ctx.send("you're probably the only one in game, aww are you getting lonely?")
+    else:
+        await ctx.send(no_game, delete_after=10)
+
+
+@bot.command(description='sends a random truth question, usage: tord truth')
+async def truth(ctx):
+    await ctx.send(choice(truth_questions))
+
+
+@bot.command(description='sends a random dare request, usage: tord dare', short_doc='sends a random dare request, usage: tord dare')
+async def dare(ctx):
+    await ctx.send(choice(dare_questions))
 
 
 @bot.event
