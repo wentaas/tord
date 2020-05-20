@@ -1,8 +1,9 @@
 from random import sample, choice
 import discord
 from discord.ext import commands
+from case import case_insensitive
 
-bot = commands.Bot(command_prefix='tord ', case_insensitive=True)
+bot = commands.Bot(command_prefix=case_insensitive('tord '), case_insensitive=True)
 token = ""
 games = {}
 no_game = "you don't have a game, type ``tord play [mention players]`` to start one"
