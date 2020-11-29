@@ -2,8 +2,7 @@ from random import sample, choice
 import discord
 from discord.ext import commands
 
-bot = commands.Bot(command_prefix=('tord ', 'Tord '), case_insensitive=True)
-token = ""
+bot = commands.Bot(command_prefix=('tord ', 'Tord '), case_insensitive=True, help_command=None)
 games = {}
 no_game = "you don't have a game, type ``tord play [mention players]`` to start one"
 
@@ -13,7 +12,12 @@ with open('dare_questions.txt', 'r', encoding='utf-8') as f:
     dare_questions = f.read().splitlines()
 
 
-@bot.command(aliases=('start', 'create', 'begin', 'make'), description='starts the game, example tord play @wentaas @lexxx')
+@bot.command()
+async def help(ctx):
+    await ctx.send("just type `tord play` and i'll guide you through the rest!! have fun")
+
+
+@bot.command(aliases=('start', 'create', 'begin', 'make'), description='starts the game, example tord play @wentaas @someone')
 async def play(ctx, *players: discord.Member):
     a = ctx.author
     if players:
@@ -29,7 +33,7 @@ async def play(ctx, *players: discord.Member):
         else:
             await ctx.send("you already have a game, type ``tord stop`` to end it", delete_after=10)
     else:
-        await ctx.send("so you use it like this ``tord play @wentaas @lexxx``", delete_after=30)
+        await ctx.send("so you use it like this ``tord play @wentaas @someone``", delete_after=30)
 
 
 @bot.command(aliases=('quit', 'end', 'finish'), description='stops the game, usage: tord stop')
@@ -48,7 +52,7 @@ async def on_command_error(ctx, error):
         await ctx.send("couldn't find that member, try mentioning them")
 
 
-@bot.command(description='adds players to the game, example: tord add @wentaas @lexxx')
+@bot.command(description='adds players to the game, example: tord add @wentaas @someone')
 async def add(ctx, *players: discord.Member):
     a = ctx.author
     if players:
@@ -68,10 +72,10 @@ async def add(ctx, *players: discord.Member):
         else:
             await ctx.send(no_game, delete_after=10)
     else:
-        await ctx.send("ok so you use it like this ``tord add @wentaas @lexxx``")
+        await ctx.send("ok so you use it like this ``tord add @wentaas @someone``")
 
 
-@bot.command(aliases=('kick', 'delete'), description='removes players from the game, example: tord remove @wentaas @lexxx')
+@bot.command(aliases=('kick', 'delete'), description='removes players from the game, example: tord remove @wentaas @someone')
 async def remove(ctx, *players: discord.Member):
     a = ctx.author
     if players:
@@ -95,7 +99,7 @@ async def remove(ctx, *players: discord.Member):
         else:
             await ctx.send(no_game, delete_after=10)
     else:
-        await ctx.send("ok so you use it like this ``tord remove @wentaas @lexxx``")
+        await ctx.send("ok so you use it like this ``tord remove @wentaas @someone``")
 
 
 @bot.command(aliases=('again', 'new', 'continue'), description='picks who askes who again, usage: tord roll')
@@ -126,4 +130,4 @@ async def on_ready():
     await bot.change_presence(activity=discord.Game("Truth or Dare, type tord play"))
     print("YAY LET'S PLAY!")
 
-bot.run(token)
+bot.run('')
